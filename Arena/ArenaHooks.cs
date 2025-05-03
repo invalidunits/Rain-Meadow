@@ -1,5 +1,6 @@
 using IL.Watcher;
 using HarmonyLib;
+using Menu;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -676,8 +677,7 @@ namespace RainMeadow
             {
                 if (classID == null)
                 {
-                    Debug("Is null!");
-                    return "MultiplayerPortrait" + color + "2";
+                    return "MultiplayerPortrait02";
                 }
                 if (ArenaHelpers.vanillaSlugcats.Contains(classID))
                 {
@@ -1403,6 +1403,23 @@ namespace RainMeadow
 
         private void PlayerResultBox_ctor(On.Menu.PlayerResultBox.orig_ctor orig, Menu.PlayerResultBox self, Menu.Menu menu, Menu.MenuObject owner, Vector2 pos, Vector2 size, ArenaSitting.ArenaPlayer player, int index)
         {
+            bool playingAsRandom = false;
+            // for random class players.
+            if (isArenaMode(out var aren))
+            {
+                OnlinePlayer? on = ArenaHelpers.FindOnlinePlayerByLobbyId(aren.arenaSittingOnlineOrder[index]);
+                if (on is not null) {
+                    if (OnlineManager.lobby.clientSettings[on].TryGetData<ArenaClientSettings>(out var settings)) {
+                        player.playerClass = settings.playingAs ?? settings.randomPlayingAs;
+                        if (settings.playingAs == null) {
+                            playingAsRandom = true;
+                        }
+
+                    } else RainMeadow.Error("no client settings");
+                    
+                } else RainMeadow.Error("no online object");
+                if (player.playerClass == null) player.playerClass = SlugcatStats.Name.White; // prevent crash from null
+            }
 
             orig(self, menu, owner, pos, size, player, index); // stupid rectangle
             if (self.backgroundRect == null)
