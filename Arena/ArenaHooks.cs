@@ -117,6 +117,17 @@ namespace RainMeadow
             new Hook(typeof(Watcher.CamoMeter).GetProperty("ForceShow").GetGetMethod(), this.SetCamoMeter);
             On.Watcher.CamoMeter.Update += CamoMeter_Update;
             On.Watcher.CamoMeter.Draw += CamoMeter_Draw;
+            IL.Player.Collide += (il) => Player_Collide2(il, typeof(Player).GetMethod(nameof(Player.Collide)));
+
+            On.SlugcatStats.getSlugcatName += SlugcatStats_getSlugcatName;
+        }
+
+        public string SlugcatStats_getSlugcatName(On.SlugcatStats.orig_getSlugcatName orig, SlugcatStats.Name id) {
+            if (id == Ext_SlugcatStatsName.OnlineRandomSlugcat) {
+                return "Unknown";
+            }
+
+            return orig(id);
         }
 
         private void CamoMeter_Draw(On.Watcher.CamoMeter.orig_Draw orig, Watcher.CamoMeter self, float timeStacker)
@@ -659,13 +670,14 @@ namespace RainMeadow
         {
             if (isArenaMode(out var arena))
             {
-                if (classID == null)
+                if ((classID is null) || (classID == RainMeadow.Ext_SlugcatStatsName.OnlineRandomSlugcat))
                 {
                     return "MultiplayerPortrait02";
                 }
                 if (ArenaHelpers.vanillaSlugcats.Contains(classID))
                 {
-                    return $"MultiplayerPortrait{color}1";
+                    // subtract 1 since 
+                    return $"MultiplayerPortrait{ArenaHelpers.vanillaSlugcats.IndexOf(classID)}1";
                 }
                 if (ModManager.Watcher && classID == Watcher.WatcherEnums.SlugcatStatsName.Watcher)
                 {
@@ -1391,11 +1403,12 @@ namespace RainMeadow
             // for random class players.
             if (isArenaMode(out var aren))
             {
-                OnlinePlayer? on = ArenaHelpers.FindOnlinePlayerByLobbyId(aren.arenaSittingOnlineOrder[index]);
-                if (on is not null) {
-                    if (OnlineManager.lobby.clientSettings[on].TryGetData<ArenaClientSettings>(out var settings)) {
-                        player.playerClass = settings.playingAs ?? settings.randomPlayingAs;
-                        if (settings.playingAs == null) {
+                var onlinePlayer = ArenaHelpers.FindOnlinePlayerByFakePlayerNumber(aren, player.playerNumber);
+                if (onlinePlayer is not null) {
+                    if (OnlineManager.lobby.clientSettings[onlinePlayer].TryGetData<ArenaClientSettings>(out var settings)) {
+                        player.playerClass = settings.playingAs;
+                        if (settings.playingAs == RainMeadow.Ext_SlugcatStatsName.OnlineRandomSlugcat) {
+                            player.playerClass = settings.randomPlayingAs;
                             playingAsRandom = true;
                         }
 
