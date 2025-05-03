@@ -11,7 +11,7 @@ namespace RainMeadow
         public static List<SlugcatStats.Name> baseGameSlugcats = new List<SlugcatStats.Name>();
         public static List<SlugcatStats.Name> vanillaSlugcats = new List<SlugcatStats.Name>();
         public static List<SlugcatStats.Name> mscSlugcats = new List<SlugcatStats.Name>();
-        public static List<SlugcatStats.Name?> selectableSlugcats = new List<SlugcatStats.Name?>();
+        public static List<SlugcatStats.Name> selectableSlugcats = new List<SlugcatStats.Name?>();
         public static readonly List<string> nonArenaSlugs = new List<string> { "MeadowOnline", "MeadowOnlineRemote" };
 
         public static void RecreateSlugcatCache()
@@ -91,7 +91,7 @@ namespace RainMeadow
             }
 
             selectableSlugcats.AddRange(allSlugcats);
-            selectableSlugcats.Add(null);
+            selectableSlugcats.Add(RainMeadow.Ext_SlugcatStatsName.OnlineRandomSlugcat);
         }
 
         public static void SetProfileColor(ArenaOnlineGameMode arena)

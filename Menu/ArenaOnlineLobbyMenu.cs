@@ -15,7 +15,6 @@ namespace RainMeadow.UI;
 public class ArenaOnlineLobbyMenu : SmartMenu, SelectOneButton.SelectOneButtonOwner
 {
     public static string[] PainCatNames => ["Inv", "Enot", "Paincat", "Sofanthiel", "Gorbo"]; // not using "???" cause it might cause some confusion to players who don't know Inv
-    public List<SlugcatStats.Name> allSlugcats = ArenaHelpers.allSlugcats;
     public SimplerButton playButton, slugcatSelectBackButton;
     public ArenaLevelSelector levelSelector;
     public OnlineArenaSettingsInferface arenaSettingsInterface;
@@ -91,26 +90,26 @@ public class ArenaOnlineLobbyMenu : SmartMenu, SelectOneButton.SelectOneButtonOw
         slugcatSelectBackButton.OnClick += _ => MovePage(new Vector2(1500f, 0f), 0);
         slugcatSelectPage.subObjects.Add(slugcatSelectBackButton);
 
-        slugcatSelectButtons = new EventfulSelectOneButton[allSlugcats.Count];
-        int buttonsInTopRow = (int)Mathf.Floor(allSlugcats.Count / 2f);
-        int buttonsInBottomRow = allSlugcats.Count - buttonsInTopRow;
+        slugcatSelectButtons = new EventfulSelectOneButton[ArenaHelpers.selectableSlugcats.Count];
+        int buttonsInTopRow = (int)Mathf.Floor(ArenaHelpers.selectableSlugcats.Count / 2f);
+        int buttonsInBottomRow = ArenaHelpers.selectableSlugcats.Count - buttonsInTopRow;
         float topRowStartingXPos = 633f - (buttonsInTopRow / 2 * 110f - ((buttonsInTopRow % 2 == 0) ? 55f : 0f));
         float bottomRowStartingXPos = 633f - (buttonsInBottomRow / 2 * 110f - ((buttonsInBottomRow % 2 == 0) ? 55f : 0f));
 
         MenuIllustration painCatPortrait = null;
         EventfulSelectOneButton painCatButton = null;
-        for (int i = 0; i < allSlugcats.Count; i++)
+        for (int i = 0; i < ArenaHelpers.selectableSlugcats.Count; i++)
         {
             int index = i;
 
             Vector2 pos = i < buttonsInTopRow ? new Vector2(topRowStartingXPos + 110f * i, 450f) : new Vector2(bottomRowStartingXPos + 110f * (i - buttonsInTopRow), 340f);
             EventfulSelectOneButton btn = new(this, slugcatSelectPage, "", "scug select", pos, new Vector2(100f, 100f), slugcatSelectButtons, i);
-            btn.OnClick += _ => SwitchSelectedSlugcat(allSlugcats[index]);
+            btn.OnClick += _ => SwitchSelectedSlugcat(ArenaHelpers.selectableSlugcats[index]);
 
-            MenuIllustration portrait = new(this, btn, "", SlugcatColorableButton.GetFileForSlugcat(allSlugcats[i], false), btn.size / 2, true, true);
+            MenuIllustration portrait = new(this, btn, "", SlugcatColorableButton.GetFileForSlugcat(ArenaHelpers.selectableSlugcats[i], false), btn.size / 2, true, true);
             btn.subObjects.Add(portrait);
 
-            if (allSlugcats[i] == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
+            if (ArenaHelpers.selectableSlugcats[i] == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
             {
                 painCatButton = btn;
                 painCatPortrait = portrait;
@@ -223,11 +222,11 @@ public class ArenaOnlineLobbyMenu : SmartMenu, SelectOneButton.SelectOneButtonOw
             RainMeadow.Error("arena is null, slugcat wont be changed!");
             return;
         }
-        slugcat = allSlugcats.IndexOf(slugcat) == -1 ? allSlugcats[0] : slugcat;
+        slugcat = ArenaHelpers.allSlugcats.IndexOf(slugcat) == -1? ArenaHelpers.allSlugcats[0] : slugcat;
         slugcatScene = Arena.slugcatSelectMenuScenes[slugcat.value];
         Arena.arenaClientSettings.playingAs = slugcat;
         GetArenaSetup.playerClass[0] = slugcat;
-        selectedSlugcatIndex = allSlugcats.IndexOf(slugcat);
+        selectedSlugcatIndex = ArenaHelpers.allSlugcats.IndexOf(slugcat);
         RainMeadow.Debug($"My Slugcat: {Arena.arenaClientSettings.playingAs}, in lobby list of client settings: {(ArenaHelpers.GetArenaClientSettings(OnlineManager.mePlayer)?.playingAs?.value) ?? "NULL!"}");
         if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
         {
@@ -333,7 +332,7 @@ public class ArenaOnlineLobbyMenu : SmartMenu, SelectOneButton.SelectOneButtonOw
         if (!RainMeadow.isArenaMode(out _)) return;
         SlugcatStats.Name slugcat = Arena.arenaClientSettings.playingAs;
         Arena.arenaClientSettings.selectingSlugcat = currentPage == 1;
-        Arena.arenaClientSettings.slugcatColor = this.IsCustomColorEnabled(slugcat) ? ColorHelpers.HSL2RGB(ColorHelpers.RWJollyPicRange(this.GetMenuHSL(slugcat, 0))) : Color.black;
+        Arena.arenaClientSettings.slugcatColor = this.manager.rainWorld.progression.IsCustomColorEnabled(slugcat)? ColorHelpers.HSL2RGB(ColorHelpers.RWJollyPicRange(this.manager.rainWorld.progression.GetCustomColorHSL(slugcat, 0))) : Color.black;
         if (playerDisplayer != null)
         {
             foreach (ButtonScroller.IPartOfButtonScroller button in playerDisplayer.buttons)
@@ -442,7 +441,7 @@ public class ArenaOnlineLobbyMenu : SmartMenu, SelectOneButton.SelectOneButtonOw
             return;
         }
         PlaySound(SoundID.MENU_Checkbox_Check);
-        slugcatDialog = new ColorMultipleSlugcatsDialog(manager, () => { }, allSlugcats, slugcat);
+        slugcatDialog = new ColorMultipleSlugcatsDialog(manager, () => { }, ArenaHelpers.selectableSlugcats, slugcat);
         manager.ShowDialog(slugcatDialog);
     }
 

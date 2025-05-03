@@ -184,6 +184,12 @@ namespace RainMeadow
                 slugcatSelectDescriptions.Remove("Night");
                 slugcatSelectDisplayNames.Remove("Night");
             }
+
+            
+
+            slugcatSelectMenuScenes.Add("MeadowRandom", MenuScene.SceneID.Endgame_Traveller);
+            slugcatSelectDescriptions.Add("MeadowRandom", "The one who wanders one path, will find great treature.\nThe one who wanders many paths, will find great truth.");
+            slugcatSelectDisplayNames.Add("MeadowRandom", "The Unknown");
         }
 
         public void ResetInvDetails()
@@ -264,7 +270,7 @@ namespace RainMeadow
         }
 
         public void InitializeSlugcat() {
-            if (arenaClientSettings.playingAs == null) {
+            if (arenaClientSettings.playingAs == RainMeadow.Ext_SlugcatStatsName.OnlineRandomSlugcat) {
                 System.Random random = new System.Random((int)DateTime.Now.Ticks);
                 avatarSettings.playingAs = ArenaHelpers.allSlugcats[random.Next(ArenaHelpers.allSlugcats.Count)]!;
                 arenaClientSettings.randomPlayingAs = avatarSettings.playingAs;
