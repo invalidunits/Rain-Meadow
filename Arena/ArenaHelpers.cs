@@ -12,7 +12,7 @@ namespace RainMeadow
         public static List<SlugcatStats.Name> vanillaSlugcats = new List<SlugcatStats.Name>();
         public static List<SlugcatStats.Name> mscSlugcats = new List<SlugcatStats.Name>();
         public static List<SlugcatStats.Name> selectableSlugcats = new List<SlugcatStats.Name?>();
-        public static readonly List<string> nonArenaSlugs = new List<string> { "MeadowOnline", "MeadowOnlineRemote" };
+        public static readonly List<string> nonArenaSlugs = new List<string> { "MeadowOnline", "MeadowRandom" };
 
         public static void RecreateSlugcatCache()
         {
