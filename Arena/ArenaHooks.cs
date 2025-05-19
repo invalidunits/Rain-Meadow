@@ -5,15 +5,14 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MoreSlugcats;
-using Rewired;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using RainMeadow.UI.Components;
-using System.IO;
-using System.Text.RegularExpressions;
+using RainMeadow.UI;
+
 
 namespace RainMeadow
 {
@@ -136,6 +135,52 @@ namespace RainMeadow
             IL.Player.Collide += (il) => Player_Collide2(il, typeof(Player).GetMethod(nameof(Player.Collide)));
 
             On.SlugcatStats.getSlugcatName += SlugcatStats_getSlugcatName;
+
+            IL.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
+        }
+
+        public void MenuScene_BuildScene(ILContext context)
+        {
+            // remove symbol for wanderer in the random players background image.
+            try
+            {
+                ILCursor cursor = new(context);
+
+
+                cursor.GotoNext(MoveType.After, x => x.MatchLdstr("Endgame - Wanderer - Flat"));
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate(string (string orig, MenuScene self) =>
+                {
+                    if (self.menu.manager.currentMainLoop is ArenaLobbyMenu2)
+                    {
+                        return "Endgame - Wanderer - Flat - Nosymbol";
+                    }
+                    return orig;
+                });
+
+
+
+                cursor.GotoNext(x => x.MatchLdstr("Wanderer - Symbol"));
+                cursor.GotoNext(MoveType.Before, x => x.MatchCall<MenuScene>(nameof(MenuScene.AddIllustration)));
+                cursor.Emit(OpCodes.Dup);
+                cursor.Emit(OpCodes.Ldarg_0);
+                cursor.EmitDelegate((MenuIllustration illus, MenuScene self) =>
+                {
+                    if (self.menu.manager.currentMainLoop is ArenaLobbyMenu2)
+                    {
+                        illus.sprite.alpha = 0.0f;
+                        illus.lastAlpha = 0.0f;
+                        illus.alpha = 0.0f;
+                    }
+                });
+
+
+
+            }
+            catch (Exception except)
+            {
+                RainMeadow.Error(except);
+            }
         }
 
         public string SlugcatStats_getSlugcatName(On.SlugcatStats.orig_getSlugcatName orig, SlugcatStats.Name id) {
