@@ -238,11 +238,11 @@ public class ArenaLobbyMenu2 : SmartMenu, SelectOneButton.SelectOneButtonOwner
             RainMeadow.Error("arena is null, slugcat wont be changed!");
             return;
         }
-        slugcat = allSlugcats.IndexOf(slugcat) == -1? allSlugcats[0] : slugcat;
+        slugcat = ArenaHelpers.selectableSlugcats.IndexOf(slugcat) == -1? ArenaHelpers.selectableSlugcats[0] : slugcat;
         slugcatScene = Arena.slugcatSelectMenuScenes[slugcat.value];
         Arena.arenaClientSettings.playingAs = slugcat;
         GetArenaSetup.playerClass[0] = slugcat;
-        selectedSlugcatIndex = allSlugcats.IndexOf(slugcat);
+        selectedSlugcatIndex = ArenaHelpers.selectableSlugcats.IndexOf(slugcat);
         RainMeadow.Debug($"My Slugcat: {Arena.arenaClientSettings.playingAs}, in lobby list of client settings: {(ArenaHelpers.GetArenaClientSettings(OnlineManager.mePlayer)?.playingAs?.value) ?? "NULL!"}");
         if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
         {
@@ -342,7 +342,7 @@ public class ArenaLobbyMenu2 : SmartMenu, SelectOneButton.SelectOneButtonOwner
         if (!RainMeadow.isArenaMode(out _)) return;
         SlugcatStats.Name slugcat = Arena.arenaClientSettings.playingAs;
         Arena.arenaClientSettings.selectingSlugcat = currentPage == 1;
-        Arena.arenaClientSettings.slugcatColor = this.IsCustomColorEnabled(slugcat)? ColorHelpers.HSL2RGB(ColorHelpers.RWJollyPicRange(this.GetMenuHSL(slugcat, 0))) : Color.black;
+        Arena.arenaClientSettings.slugcatColor = this.manager.rainWorld.progression.IsCustomColorEnabled(slugcat)? ColorHelpers.HSL2RGB(ColorHelpers.RWJollyPicRange(this.manager.rainWorld.progression.GetCustomColorHSL(slugcat, 0))) : Color.black;
         if (playerDisplayer != null)
         {
             foreach (ButtonScroller.IPartOfButtonScroller button in playerDisplayer.buttons)

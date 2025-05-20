@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using Menu;
 using MoreSlugcats;
 using static RainMeadow.ArenaPrepTimer;
@@ -131,7 +132,7 @@ namespace RainMeadow
                 slugcatSelectMenuScenes.Add("Rivulet", MoreSlugcatsEnums.MenuSceneID.Landscape_MS);
                 slugcatSelectMenuScenes.Add("Saint", MoreSlugcatsEnums.MenuSceneID.Landscape_CL);
                 slugcatSelectMenuScenes.Add("Slugpup", RainMeadow.rainMeadowOptions.SlugpupHellBackground.Value ? MoreSlugcatsEnums.MenuSceneID.Landscape_HR : MenuScene.SceneID.Intro_4_Walking);
-                slugcatSelectMenuScenes.Add("Inv", MoreSlugcatsEnums.MenuSceneID.End_Inv);
+                slugcatSelectMenuScenes.Add("Inv", MoreSlugcatsEnums.MenuSceneID.);
 
                 slugcatSelectDescriptions.Add("Gourmand", "Your tale of twist and turns is near-complete.\nCrush this one last quest.");
                 slugcatSelectDescriptions.Add("Artificer", "An explosive personality and unmatched anger.\nMaul and detonate your way to vengeance.");
@@ -187,7 +188,14 @@ namespace RainMeadow
             
 
             slugcatSelectMenuScenes.Add("MeadowRandom", MenuScene.SceneID.Endgame_Traveller);
-            slugcatSelectDescriptions.Add("MeadowRandom", "The one who wanders one path, will find great treature.\nThe one who wanders many paths, will find great truth.");
+            StringBuilder randomDescBuilder = new();
+            if (ModManager.MSC) randomDescBuilder.Append("Am I Warrior from the past, or a Messiah from the future?");
+            else randomDescBuilder.Append("Am I Cat Searching for many, or a Mouse searching for one?");
+            if (ModManager.Watcher) randomDescBuilder.Append("\nAm I a doomed Samaritan, or an Anomaly across time and space?");
+            else randomDescBuilder.Append("\nAm I doomed a Samaritan, or am I forever stuck in your shadow?");
+            randomDescBuilder.Append("\nI do not know, for I am not one. I am many.");
+
+            slugcatSelectDescriptions.Add("MeadowRandom", randomDescBuilder.ToString());
             slugcatSelectDisplayNames.Add("MeadowRandom", "The Unknown");
         }
 
