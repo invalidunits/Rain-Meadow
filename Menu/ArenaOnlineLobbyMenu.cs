@@ -222,11 +222,11 @@ public class ArenaOnlineLobbyMenu : SmartMenu, SelectOneButton.SelectOneButtonOw
             RainMeadow.Error("arena is null, slugcat wont be changed!");
             return;
         }
-        slugcat = ArenaHelpers.allSlugcats.IndexOf(slugcat) == -1? ArenaHelpers.allSlugcats[0] : slugcat;
+        slugcat = ArenaHelpers.selectableSlugcats.IndexOf(slugcat) == -1? ArenaHelpers.selectableSlugcats[0] : slugcat;
         slugcatScene = Arena.slugcatSelectMenuScenes[slugcat.value];
         Arena.arenaClientSettings.playingAs = slugcat;
         GetArenaSetup.playerClass[0] = slugcat;
-        selectedSlugcatIndex = ArenaHelpers.allSlugcats.IndexOf(slugcat);
+        selectedSlugcatIndex = ArenaHelpers.selectableSlugcats.IndexOf(slugcat);
         RainMeadow.Debug($"My Slugcat: {Arena.arenaClientSettings.playingAs}, in lobby list of client settings: {(ArenaHelpers.GetArenaClientSettings(OnlineManager.mePlayer)?.playingAs?.value) ?? "NULL!"}");
         if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
         {

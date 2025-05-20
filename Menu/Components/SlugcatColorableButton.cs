@@ -30,7 +30,7 @@ namespace RainMeadow.UI.Components
         }
         public static string GetFileForSlugcatIndex(SlugcatStats.Name? slugcat, int colorIndex, bool isDead = false)
         {
-            if (slugcat == null)
+            if ((slugcat is null) || (slugcat == RainMeadow.Ext_SlugcatStatsName.OnlineRandomSlugcat))
             {
                 return $"Multiplayerportrait{colorIndex}2";
             }
@@ -43,11 +43,6 @@ namespace RainMeadow.UI.Components
             {
                 int randomChoice = UnityEngine.Random.Range(0, 5);
                 return $"Multiplayerportrait{randomChoice}{deadIndex}-{slugcat.value}";
-            }
-
-            if ((slugcat is null) || (slugcat == RainMeadow.Ext_SlugcatStatsName.OnlineRandomSlugcat))
-            {
-                return "MultiplayerPortrait02";
             }
             
             return $"Multiplayerportrait{(ModManager.MSC && slugcat == MSCScugs.Slugpup ? 4 : colorIndex)}{deadIndex}-{slugcat.value}";

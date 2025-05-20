@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Menu;
 using MoreSlugcats;
 using static RainMeadow.ArenaPrepTimer;
@@ -188,7 +189,14 @@ namespace RainMeadow
             
 
             slugcatSelectMenuScenes.Add("MeadowRandom", MenuScene.SceneID.Endgame_Traveller);
-            slugcatSelectDescriptions.Add("MeadowRandom", "The one who wanders one path, will find great treature.\nThe one who wanders many paths, will find great truth.");
+            StringBuilder randomDescBuilder = new();
+            if (ModManager.MSC) randomDescBuilder.Append("Am I Warrior from the past, or a Messiah from the future?");
+            else randomDescBuilder.Append("Am I Cat Searching for many, or a Mouse searching for one?");
+            if (ModManager.Watcher) randomDescBuilder.Append("\nAm I a doomed Samaritan, or an Anomaly across time and space?");
+            else randomDescBuilder.Append("\nAm I doomed a Samaritan, or am I forever stuck in your shadow?");
+            randomDescBuilder.Append("\nI do not know, for I am not one. I am many.");
+
+            slugcatSelectDescriptions.Add("MeadowRandom", randomDescBuilder.ToString());
             slugcatSelectDisplayNames.Add("MeadowRandom", "The Unknown");
         }
 
