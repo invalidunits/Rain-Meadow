@@ -117,7 +117,9 @@ namespace RainMeadow
             new Hook(typeof(Watcher.CamoMeter).GetProperty("ForceShow").GetGetMethod(), this.SetCamoMeter);
             On.Watcher.CamoMeter.Update += CamoMeter_Update;
             On.Watcher.CamoMeter.Draw += CamoMeter_Draw;
-
+            IL.Player.Collide += (il) => Player_Collide2(il, typeof(Player).GetMethod(nameof(Player.Collide)));
+            On.SlugcatStats.getSlugcatName += SlugcatStats_getSlugcatName;
+            IL.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
             
         }
 
@@ -132,11 +134,6 @@ namespace RainMeadow
                     self.nextLevelCall = true;
                 }
             }
-            IL.Player.Collide += (il) => Player_Collide2(il, typeof(Player).GetMethod(nameof(Player.Collide)));
-
-            On.SlugcatStats.getSlugcatName += SlugcatStats_getSlugcatName;
-
-            IL.Menu.MenuScene.BuildScene += MenuScene_BuildScene;
         }
 
         public void MenuScene_BuildScene(ILContext context)
@@ -151,7 +148,7 @@ namespace RainMeadow
                 cursor.Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate(string (string orig, MenuScene self) =>
                 {
-                    if (self.menu.manager.currentMainLoop is ArenaLobbyMenu2)
+                    if (self.menu.manager.currentMainLoop is ArenaOnlineLobbyMenu)
                     {
                         return "Endgame - Wanderer - Flat - Nosymbol";
                     }
@@ -166,11 +163,13 @@ namespace RainMeadow
                 cursor.Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate((MenuIllustration illus, MenuScene self) =>
                 {
-                    if (self.menu.manager.currentMainLoop is ArenaLobbyMenu2)
+                    Debug(self.menu.manager.currentMainLoop is ArenaOnlineLobbyMenu);
+                    if (self.menu.manager.currentMainLoop is ArenaOnlineLobbyMenu)
                     {
                         illus.sprite.alpha = 0.0f;
                         illus.lastAlpha = 0.0f;
                         illus.alpha = 0.0f;
+                        illus.setAlpha = 0.0f;
                     }
                 });
 
