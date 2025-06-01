@@ -42,7 +42,7 @@ public class ArenaSlugcatSelectPage : PositionedMenuObject, SelectOneButton.Sele
 
             Vector2 buttonPos = i < buttonsInTopRow ? new Vector2(topRowStartingXPos + 110f * i, 450f) : new Vector2(bottomRowStartingXPos + 110f * (i - buttonsInTopRow), 340f);
             EventfulSelectOneButton btn = new(menu, this, "", "scug select", buttonPos, new Vector2(100f, 100f), slugcatSelectButtons, i);
-            btn.OnClick += _ => ArenaMenu?.SwitchSelectedSlugcat(ArenaHelpers.selectableSlugcats[index]);
+            btn.OnClick += _ => SwitchSelectedSlugcat(ArenaHelpers.selectableSlugcats[index]);
 
             MenuIllustration portrait = new(menu, btn, "", SlugcatColorableButton.GetFileForSlugcat(ArenaHelpers.selectableSlugcats[i], false), btn.size / 2, true, true);
             btn.subObjects.Add(portrait);
@@ -117,6 +117,8 @@ public class ArenaSlugcatSelectPage : PositionedMenuObject, SelectOneButton.Sele
             selectedSlugcatIndex = 0;
             slugcat = ArenaHelpers.selectableSlugcats[0];
         }
+
+        ArenaMenu?.SwitchSelectedSlugcat(slugcat);
 
         if (slugcat == MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel)
         {
