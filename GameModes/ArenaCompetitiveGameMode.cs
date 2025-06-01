@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Menu;
 using MoreSlugcats;
+using UnityEngine;
 using static RainMeadow.ArenaPrepTimer;
 
 namespace RainMeadow
@@ -186,18 +187,29 @@ namespace RainMeadow
                 slugcatSelectDisplayNames.Remove("Night");
             }
 
-            
+
 
             slugcatSelectMenuScenes.Add("MeadowRandom", MenuScene.SceneID.Endgame_Traveller);
-            StringBuilder randomDescBuilder = new();
-            if (ModManager.MSC) randomDescBuilder.Append("Am I Warrior from the past, or a Messiah from the future?");
-            else randomDescBuilder.Append("Am I Cat Searching for many, or a Mouse searching for one?");
-            if (ModManager.Watcher) randomDescBuilder.Append("\nAm I a doomed Samaritan, or an Anomaly across time and space?");
-            else randomDescBuilder.Append("\nAm I doomed a Samaritan, or am I forever stuck in your shadow?");
-            randomDescBuilder.Append("\nI do not know, for I am not one. I am many.");
 
-            slugcatSelectDescriptions.Add("MeadowRandom", randomDescBuilder.ToString());
+
+            if ((OnlineManager.mePlayer.id.name == "IVLD") || (UnityEngine.Random.Range(0, 4) == 0))
+            {
+                StringBuilder randomDescBuilder = new();
+                if (ModManager.MSC) randomDescBuilder.Append("Am I Warrior from the past, or a Messiah from the future?");
+                else randomDescBuilder.Append("Am I Cat Searching for many, or a Mouse searching for one?");
+                if (ModManager.Watcher) randomDescBuilder.Append("\nAm I a doomed Samaritan, or an Anomaly across time and space?");
+                else randomDescBuilder.Append("\nAm I doomed a Samaritan, or am I forever stuck in your shadow?");
+                randomDescBuilder.Append("\nI do not know, for I am not one. I am many.");
+                slugcatSelectDescriptions.Add("MeadowRandom", randomDescBuilder.ToString());
+            }
+            else
+            {
+                slugcatSelectDescriptions.Add("MeadowRandom", "Those who walk a single path may find great treasure.\nThose who wander many paths will find great truth.");
+            }
+            
             slugcatSelectDisplayNames.Add("MeadowRandom", "The Unknown");
+
+            
         }
 
         public void ResetInvDetails()
