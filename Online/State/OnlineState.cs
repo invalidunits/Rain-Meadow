@@ -93,11 +93,25 @@ namespace RainMeadow
 
         public virtual void CustomSerialize(Serializer serializer)
         {
+            if (Serializer.monitoringState)
+            {
+                if (!Serializer.stateSerializationCount.ContainsKey(handler.type.Name)) Serializer.stateSerializationCount.Add(handler.type.Name, 0);
+                Serializer.stateSerializationCount[handler.type.Name] += 1;
+            }
+
+
             try
             {
                 long wasPos = serializer.Position;
                 handler.serialize(this, serializer);
                 RainMeadow.Trace($"{this} (delta?:{isDelta}) took {serializer.Position - wasPos}");
+
+                if (Serializer.monitoringState)
+                {
+                    if (!Serializer.stateSerializationSize.ContainsKey(handler.type.Name)) Serializer.stateSerializationSize.Add(handler.type.Name, 0);
+                    Serializer.stateSerializationSize[handler.type.Name] += (int)(serializer.Position - wasPos);
+                }                
+
             }
             catch (Exception e)
             {

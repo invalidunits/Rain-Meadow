@@ -1,7 +1,9 @@
-﻿using Menu;
+﻿using HarmonyLib;
+using Menu;
 using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -174,7 +176,30 @@ namespace RainMeadow
 
             if (toPlayer.needsAck || toPlayer.OutgoingEvents.Count > 0 || toPlayer.OutgoingStates.Count > 0)
             {
+                Serializer.monitoringState = UnityEngine.Input.GetKey(KeyCode.K);
+                Serializer.stateSerializationCount.Clear();
                 netIO?.SendSessionData(toPlayer);
+
+                if (Serializer.monitoringState)
+                {
+                    RainMeadow.Debug("writing after monitering state");
+                    var diagtxt = System.IO.Path.Combine(ModManager.GetModById("henpemaz_rainmeadow").path, "serializationdiag.txt");
+                    using (StreamWriter writer = new(diagtxt, true))
+                    {
+                        writer.Write($"sent to: {toPlayer}, tick: {toPlayer.tick}");
+                        writer.WriteLine();
+                        foreach (var serializationCounts in Serializer.stateSerializationCount)
+                        {
+
+                            writer.Write($"{serializationCounts.Key}: states_written: {serializationCounts.Value}, bytes: {Serializer.stateSerializationSize.GetValueSafe(serializationCounts.Key)}");
+                            writer.WriteLine();
+                        }
+                        
+                        writer.WriteLine();
+                    }
+                    Serializer.monitoringState = false;
+                }
+                
             }
         }
 

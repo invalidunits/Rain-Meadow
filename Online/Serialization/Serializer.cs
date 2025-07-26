@@ -367,6 +367,11 @@ namespace RainMeadow
             }
         }
 
+
+        public static Dictionary<string, int> stateSerializationCount = new();
+        public static Dictionary<string, int> stateSerializationSize = new();
+        public static bool monitoringState = false;
+
         public bool IsDelta; // OnlineState is allowed to change this (at the start of its serialize method)
         private void WrappedSerialize(OnlineState state)
         {
