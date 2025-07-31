@@ -10,7 +10,7 @@
     <RootNamespace>RainMeadow</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
+    <DefineConstants>$(DefineConstants);TRACE;TRACING</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
