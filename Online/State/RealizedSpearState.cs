@@ -53,6 +53,14 @@ namespace RainMeadow
         public override void ReadTo(OnlineEntity onlineEntity)
         {
             var spear = (Spear)((OnlinePhysicalObject)onlineEntity).apo.realizedObject;
+            if (spear.stuckInWall != stuckInWall)
+            {
+                if (spear.stuckInWall.HasValue)
+                {
+                    spear.resetHorizontalBeamState();
+                }
+            }
+
             spear.stuckInWall = stuckInWall;
             spear.abstractSpear.stuckInWallCycles = stuckInWallCycles;
             spear.spearDamageBonus = spearDamageBonus;
