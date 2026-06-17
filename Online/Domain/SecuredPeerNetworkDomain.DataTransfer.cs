@@ -4,11 +4,9 @@ using RainMeadow.Shared;
 
 namespace RainMeadow
 {
-    public abstract class SecuredPeerNetworkDomain : NetworkDomain
+    public abstract partial class SecuredPeerNetworkDomain : NetworkDomain
     {
 
-        public abstract SecuredPeerId? GetPeerIDFromPlayer(OnlinePlayer player);
-        public abstract OnlinePlayer? GetPlayerFromPeerID(SecuredPeerId id);
         public override void SendSessionData(OnlinePlayer toPlayer)
         {
             if (PlatformPeerManager is null) return;
@@ -17,14 +15,18 @@ namespace RainMeadow
                 OnlineManager.serializer.WriteData(toPlayer);
                 SecuredPeerId? peerID = GetPeerIDFromPlayer(toPlayer);
                 if (peerID is null) throw new InvalidProgrammerException("no peerid");
-                SendPacket(peerID, new SessionPacket(new ArraySegment<byte>(OnlineManager.serializer.buffer, 0, (int)OnlineManager.serializer.Position)), PacketReliability.Unreliable);
-                OnlineManager.serializer.EndWrite();
+                var packet = new SessionPacket(new ArraySegment<byte>(OnlineManager.serializer.buffer, 0, (int)OnlineManager.serializer.Position));
+
+                SendPacket(peerID, packet, PacketReliability.Unreliable);
             }
             catch (Exception e)
             {
                 RainMeadow.Error(e);
-                OnlineManager.serializer.EndWrite();
                 throw;
+            }
+            finally
+            {
+                OnlineManager.serializer.EndWrite();
             }
         }
 
@@ -48,7 +50,7 @@ namespace RainMeadow
         public void SendBroadcast(Packet packet)
         {
             if (PlatformPeerManager is null) return;
-            if (packet.boxed) 
+            if (packet.boxed)
             {
                 RainMeadow.Error("Cannot broadcast boxed packet.");
                 return;
@@ -63,12 +65,12 @@ namespace RainMeadow
         public void SendPacket(SecuredPeerId peer, Packet packet, PacketReliability sendType, bool broadcast = false)
         {
             if (PlatformPeerManager is null) return;
-            using (MemoryStream memory = new MemoryStream(128))
+            using (MemoryStream memory = new MemoryStream(128))  // REVIEW: what is this size?
             using (BinaryWriter writer = new BinaryWriter(memory))
             {
                 Packet.Encode(packet, writer, peer, PlatformPeerManager.Me);
-                PlatformPeerManager.Send(memory.GetBuffer(), peer, 
-                    sendType switch  
+                PlatformPeerManager.Send(memory.GetBuffer(), peer,
+                    sendType switch
                     {
                         PacketReliability.Reliable => SecuredPeerManager.PacketFlags.Reliable,
                         _ => broadcast? SecuredPeerManager.PacketFlags.Broadcast : SecuredPeerManager.PacketFlags.Unreliable,
@@ -82,7 +84,7 @@ namespace RainMeadow
             if (PlatformPeerManager is null) return;
             PlatformPeerManager.Update();
 
-            int packetlimit = 4; // TODO: Add to remix menu
+            int packetlimit = RainMeadow.rainMeadowOptions.UdpMaxPacketsPerUpdate.Value;
             for (int i = 0; (i < packetlimit) && PlatformPeerManager.IsPacketAvailable(); i++)
             {
                 try
@@ -101,6 +103,7 @@ namespace RainMeadow
                 catch (Exception e)
                 {
                     RainMeadow.Error(e);
+                    OnlineManager.serializer.EndRead();
                 }
             }
         }
@@ -111,20 +114,5 @@ namespace RainMeadow
             PlatformPeerManager.Send(Array.Empty<byte>(), id, SecuredPeerManager.PacketFlags.Reliable);
         }
 
-        public override void ForgetPlayer(OnlinePlayer player)
-        {
-            if (PlatformPeerManager is null) return;
-            SecuredPeerId? peerID = GetPeerIDFromPlayer(player);
-            if (peerID is not null)
-            {
-                PlatformPeerManager.ForgetPeer(peerID);
-            }
-        }
-
-        public override void ForgetEverything()
-        {
-            if (PlatformPeerManager is null) return;
-            PlatformPeerManager.ForgetAllPeers();
-        }
     }
 }

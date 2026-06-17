@@ -7,63 +7,77 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
 using RainMeadow.Shared;
+using RainMeadow.Shared.Models;
 
 // TODO: delete this whole file once HTTP-based matchmaking exists
 namespace RainMeadow
 {
     public partial class RouterNetworkDomain
     {
-        // void OnLobbyServerEmpty(LobbyIs packet)
-        // {
-        //     RainMeadow.Debug("Received LobbyEmpty");
-        //     if (!ValidateIsFromServer(packet)) return;
-        //     // serverPeer has been set by the original RequestJoinLobby
-        //     // we have been chosen to be the lobby host, set our routingID to 1 now so that we don't get confused by the ModifyPlayerList packet
-        //     ((RouterPlayerId)OnlineManager.mePlayer.id).routingID = 1;
+        SecuredPeerId preloadedServerPeer = null;
+        public void PreconfigureLobbyServerForCreation(string lobbyEndPointString)
+        {
+            preloadedServerPeer = SecuredPeerId.GetPeerIdByName(lobbyEndPointString);
+            if (preloadedServerPeer != null)
+            {
+                RainMeadow.Debug("server set: " + preloadedServerPeer.ToString());
+            }
+            else
+            {
+                throw new FormatException("LobbyServer Address format should be public_key@xxx.xxx.xxx.xxx:port");
+            }
+        }
 
-        //     // the user can create the lobby now, and it will be published to the server.
-        //     OnLobbyJoinedEvent(false, Utils.Translate("Connection successful! You can now use the \"create lobby\" menu to start playing."));
-        //     //OnlineManager.instance.manager.ShowDialog(new DialogNotify("No lobby in this server: you can create one.", OnlineManager.instance.manager, null));
-        // }
+        public override void CreateLobby(LobbyVisibility visibility, string gameMode, string? password, int? maxPlayerCount, bool pinned = false)
+        {
+            currentDomain = NetworkDomainType.Router;
+            if (preloadedServerPeer == null)
+            {
+                OnLobbyJoinedEvent(false, Utils.Translate("Global matchmaking is not yet implemented, you need to provide a lobby server override."));
+                // FIXME: this is where we would insert the global-matchmaking-negociation to find our assigned lobby server
+                return;
+            }
+            else
+            {
+                try
+                {
+                    serverPeer = PlatformPeerManager.GetRemotePeer(preloadedServerPeer, true);
+                }
+                catch (Exception exc)
+                {
+                    // there's pretty much only one reason why this can fail
+                    throw new Exception("LobbyServer Address format should be public_key@xxx.xxx.xxx.xxx:port. Omitting the public key is only allowed when joining Local-domain lobbies");
+                }
+                preloadedServerPeer = null;
+            }
 
-        // public override void CreateLobby(LobbyVisibility visibility, string gameMode, string? password, int? maxPlayerCount, bool pinned = false)
-        // {
-        //     currentDomain = NetworkDomainType.Router;
-        //     if (serverPeer != null) 
-        //     {
-        //         var maxplayercount = maxPlayerCount ?? 0;
-        //         var lobbyInfo = new RouterLobbyInfo(
-        //             serverPeer,
-        //             "UNNAMED", gameMode,
-        //             1, (password is string), maxplayercount,
-        //             RainMeadowModManager.ModArrayToString(RainMeadowModManager.GetRequiredMods()),
-        //             RainMeadowModManager.ModArrayToString(RainMeadowModManager.GetBannedMods())
-        //         );
-        //         OnlineManager.lobby = new Lobby(new OnlineGameMode.OnlineGameModeType(gameMode), OnlineManager.mePlayer, password);
-        //         OnLobbyJoinedEvent(true, "");
-        //     } else {
-        //         OnLobbyJoinedEvent(false, Utils.Translate("You need attempt a direct-connect to the lobby server first, and if it is empty you can create the lobby."));
-        //     }
-        // }
+            var maxplayercount = maxPlayerCount ?? 0;
+            var lobbyParams = new LobbyParameters()
+            {
+                Mode = gameMode,
+                MaxPlayers = maxplayercount,
+                PasswordProtected = (password is string),
+                Mods = RainMeadowModManager.ModArrayToString(RainMeadowModManager.GetRequiredMods()),
+                BannedMods = RainMeadowModManager.ModArrayToString(RainMeadowModManager.GetBannedMods()),
+            };
+            var lobbyInfo = new RouterLobbyInfo(serverPeer.id, "UNNAMED", 1, lobbyParams);
 
-        // void RequestPublishLobby(RouterLobbyInfo lobby)
-        // {
-        //     // do not set currentDomain because it has been set when setting up the direct connect
-        //     // also setting it now would destroy the serverPeer
-        //     //NetworkDomain.currentDomain = NetworkDomainType.Router;
-        //     OnlineManager.currentlyJoiningLobby = lobby;
+            OnlineManager.currentlyJoiningLobby = lobbyInfo;
+            ((RouterPlayerId)OnlineManager.mePlayer.id).routingID = 1; // we have to be the first for us to send this
 
-        //     RainMeadow.Debug("Sending Request to join lobby...");
-        //     string meName = OnlineManager.mePlayer.id.name;
-        //     SendPacket(
-        //         serverPeer,
-        //         new PublishRouterLobby(
-        //             lobby.maxPlayerCount, lobby.name,  lobby.mode, lobby.hasPassword,
-        //             lobby.requiredMods, lobby.bannedMods
-        //         ),
-        //         PacketReliability.Reliable
-        //     );
-        //     ((RouterPlayerId)OnlineManager.mePlayer.id).routingID = 1; // we have to be the first for us to send this
-        // }
+            string meName = RainMeadow.rainMeadowOptions.LanUserName.Value;
+            if (string.IsNullOrWhiteSpace(meName)) meName = UsernameGenerator.GenerateRandomUsername(PlatformPeerManager.Me.GetHashCode());
+
+            var lobbyPublishPacket = new PublishRouterLobby(
+                lobbyInfo.name,
+                lobbyParams,
+                meName,
+                RainMeadow.rainMeadowOptions.RouterExposeIP.Value
+            ) {boxed = true};
+            SendPacket(serverPeer.id, lobbyPublishPacket, PacketReliability.Reliable);
+
+            OnlineManager.lobby = new Lobby(new OnlineGameMode.OnlineGameModeType(gameMode), OnlineManager.mePlayer, password);
+            OnLobbyJoinedEvent(true, "");
+        }
     }
 }

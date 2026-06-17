@@ -7,6 +7,7 @@ namespace RainMeadow
     public class SessionPacket : Packet
     {
         public override Type type => Type.Session;
+        public override bool requireBoxed => false;
         private ArraySegment<byte> data;
 
         public SessionPacket() : base() { }
@@ -22,7 +23,9 @@ namespace RainMeadow
 
         public override void Deserialize(BinaryReader reader)
         {
-            data = new ArraySegment<byte>(reader.ReadBytes(size));
+            long orig = reader.BaseStream.Position;
+            base.Deserialize(reader);
+            data = new ArraySegment<byte>(reader.ReadBytes((int)(size-(reader.BaseStream.Position-orig))));
         }
 
         public override void Process()
@@ -38,7 +41,7 @@ namespace RainMeadow
                         player.UpdateSessionBuffer((IntPtr)(pdata + data.Offset), data.Count);
                     }
                 }
-                
+
             }
         }
     }

@@ -14,7 +14,7 @@ namespace RainMeadow
         protected MenuTabWrapper tabWrapper;
         public SymbolButton cancelButton;
         public SimpleButton continueButton;
-        public OpTextBox IPBox;
+        public OpTypeBox IPBox;
         public OpComboBox domainDropDown;
 
         public CheckBox passwordCheckBox;

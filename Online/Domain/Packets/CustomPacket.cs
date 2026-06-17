@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using RainMeadow.Shared;
 
@@ -21,7 +22,7 @@ namespace RainMeadow
         {
             base.Serialize(writer);
             writer.Write(this.key);
-            writer.Write(this.data.Array, this.data.Offset, this.size);
+            writer.Write(this.data.Array, this.data.Offset, this.data.Count);
         }
 
         public override void Deserialize(BinaryReader reader)
@@ -43,7 +44,7 @@ namespace RainMeadow
                 RainMeadow.Error($"Custom Packet was too large, the maximum size is 32768");
                 return;
             }
-            
+
             if (NetworkDomain.currentInstance.CustomDataSupported && NetworkDomain.currentInstance is SecuredPeerNetworkDomain domain)
             {
                 if (domain.GetPlayerFromPeerID(processingPeer!) is OnlinePlayer player)
@@ -54,14 +55,16 @@ namespace RainMeadow
                 {
                     RainMeadow.Error($"Recieved custom packet from unknown player {processingPeer}");
                 }
+
             }
+
         }
 
         public void SteamEncode(MemoryStream ms, BinaryWriter writer)
         {
             writer.Write(this.key);
             writer.Write((ushort)this.data.Count);
-            writer.Write(this.data.Array, 0, this.data.Count);
+            writer.Write(this.data.Array, this.data.Offset, this.data.Count);
         }
     }
 }

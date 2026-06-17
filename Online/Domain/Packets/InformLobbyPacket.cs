@@ -27,8 +27,9 @@ namespace RainMeadow
             base.Deserialize(reader);
             this.parameters = new LobbyParameters(reader);
         }
-        
+
         public override Type type => Type.InformLobby;
+        public override bool requireBoxed => false;  // TODO: is this needed? does it do anything?
 
         public override void Process()
         {

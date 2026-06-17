@@ -16,18 +16,26 @@ namespace RainMeadow;
 public class LobbyCreateMenu : SmartMenu
 {
     private OpComboBox2 visibilityDropDown;
-    private OpTextBox lobbyLimitNumberTextBox;
+    private UIelementWrapper visibilityWrapper;
+    private OpTypeBox lobbyLimitNumberTextBox;
     private int maxPlayerCount;
     private OpCheckBox? lobbyPinnedCheckBox;
-    private OpCheckBox? lobbyAnniversaryGags;
+    private OpCheckBox? lobbyEventGags;
+
+    private OpComboBox2 meadowTimelineDropdown;
+
     private SimplerButton createButton;
     private OpComboBox2 modeDropDown;
     private ProperlyAlignedMenuLabel modeDescriptionLabel;
     private OpComboBox2 domainDropdown;
-    private OpTextBox passwordInputBox;
+    private OpTypeBox lobbyServerOverrideBox;
+    private UIelementWrapper lobbyServerOverrideWrapper;
+    private ProperlyAlignedMenuLabel timelineDescription;
+    private OpTypeBox passwordInputBox;
     private MenuDialogBox? popupDialog;
     public override MenuScene.SceneID GetScene => ModManager.MMF ? manager.rainWorld.options.subBackground : MenuScene.SceneID.Landscape_SU;
 
+    public string? meadowTimeline;
     public LobbyCreateMenu(ProcessManager manager) : base(manager, RainMeadow.Ext_ProcessID.LobbyCreateMenu)
     {
         // title at the top
@@ -41,29 +49,27 @@ public class LobbyCreateMenu : SmartMenu
         mainPage.subObjects.Add(createButton);
 
         // game mode selection in top center
-        var where = new Vector2(500f, 550);
+        var where = new Vector2(523f, 550);
         var modeLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Mode:"), where, new Vector2(200, 20f), false);
         mainPage.subObjects.Add(modeLabel);
         where.x += 80;
-        modeDropDown = new OpComboBox2(new Configurable<OnlineGameMode.OnlineGameModeType>(OnlineGameMode.OnlineGameModeType.Meadow), where, 160, OpResourceSelector.GetEnumNames(null, typeof(OnlineGameMode.OnlineGameModeType)).Select(li => { li.displayName = Translate(li.displayName); return li; }).ToList()) { colorEdge = MenuColorEffect.rgbWhite };
+        modeDropDown = new OpComboBox2(
+            new Configurable<OnlineGameMode.OnlineGameModeType>(OnlineGameMode.OnlineGameModeType.Meadow),
+            where,
+            160,
+            OpResourceSelector.GetEnumNames(null, typeof(OnlineGameMode.OnlineGameModeType))
+              .Select(li => { li.displayName = Translate(li.displayName); return li; })
+              .ToList()
+        ) { colorEdge = MenuColorEffect.rgbWhite };
         modeDropDown.OnChanged += UpdateModeDescription;
+
         new UIelementWrapper(this.tabWrapper, modeDropDown);
         where.x -= 80;
         where.y -= 35;
         modeDescriptionLabel = new ProperlyAlignedMenuLabel(this, mainPage, "", where, new Vector2(0, 20f), false);
         mainPage.subObjects.Add(modeDescriptionLabel);
 
-        // visibility setting in upper center
         where.y -= 45;
-        var visibilityLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Visibility:"), where, new Vector2(200, 20f), false);
-        mainPage.subObjects.Add(visibilityLabel);
-        where.x += 80;
-        visibilityDropDown = new OpComboBox2(new Configurable<NetworkDomain.LobbyVisibility>(NetworkDomain.LobbyVisibility.Public), where, 160, OpResourceSelector.GetEnumNames(null, typeof(NetworkDomain.LobbyVisibility)).Select(li => { li.displayName = Translate(li.displayName); return li; }).ToList()) { colorEdge = MenuColorEffect.rgbWhite };
-        new UIelementWrapper(this.tabWrapper, visibilityDropDown);
-
-
-        where.y -= 45;
-        where.x -= 80;
         mainPage.subObjects.Add(
             new ProperlyAlignedMenuLabel(this, mainPage, Translate("Password:"), where, new Vector2(200, 20f), false)
         );
@@ -87,7 +93,7 @@ public class LobbyCreateMenu : SmartMenu
         mainPage.subObjects.Add(limitNumberLabel);
         where.x += 80;
         where.y -= 5;
-        lobbyLimitNumberTextBox = new OpTextBox(new Configurable<int>(maxPlayerCount = 4), where, 160f)
+        lobbyLimitNumberTextBox = new OpTypeBox(new Configurable<int>(maxPlayerCount = 4), where, 160f)
         {
             accept = OpTextBox.Accept.Int,
             maxLength = 2,
@@ -97,21 +103,41 @@ public class LobbyCreateMenu : SmartMenu
         where.y += 5;
         where.x -= 80;
 
+        //Timeline selection dropdown
         where.y -= 45;
-        limitNumberLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Domain:"), where, new Vector2(400, 20f), false);
-        mainPage.subObjects.Add(limitNumberLabel);
-
-
+        timelineDescription = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Timeline:"), where, new Vector2(200, 20f), false);
+        mainPage.subObjects.Add(timelineDescription);
         where.x += 80;
         where.y -= 5;
-        domainDropdown = new OpComboBox2(new Configurable<string>(
-                NetworkDomain.supportedDomains.Last().value), where, 160f - 35f, NetworkDomain.supportedDomains.Select(x => new ListItem(x.value, Utils.Translate(x.value))).ToList()) { colorEdge = MenuColorEffect.rgbWhite };
-        new UIelementWrapper(this.tabWrapper, domainDropdown);
-        where.x += 80;
+        meadowTimeline = SlugcatStats.Name.White.value;
+
+        var filteredList = OpResourceSelector.GetEnumNames(null, typeof(SlugcatStats.Name))
+            .Where(li =>
+            {
+                var name = (SlugcatStats.Name)ExtEnumBase.Parse(typeof(SlugcatStats.Name), li.name, false);
+                // Include eg boi
+                return !SlugcatStats.HiddenOrUnplayableSlugcat(name) || (ModManager.MSC && name == MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName.Sofanthiel);
+            })
+            .Select(li =>
+            {
+                li.displayName = Translate(li.displayName);
+                return li;
+            })
+            .ToList();
+
+        meadowTimelineDropdown = new OpComboBox2(
+            new Configurable<string>(meadowTimeline),
+            where,
+            160,
+            filteredList
+        )
+        { colorEdge = MenuColorEffect.rgbWhite };
+        meadowTimelineDropdown.OnChanged += UpdateMeadowTimeline;
+        new UIelementWrapper(this.tabWrapper, meadowTimelineDropdown);
+        where.x -= 80;
 
         if (NetworkDomain.instances.OfType<NetworkDomain>().Any(x => x.IsTrustedCommunity(OnlineManager.mePlayer.id)))
         {
-            where.x -= 160;
             where.y -= 45;
             mainPage.subObjects.Add(new ProperlyAlignedMenuLabel(this, mainPage, Translate("Pinned:"), where, new Vector2(400, 20f), false));
             where.x += 80;
@@ -119,24 +145,68 @@ public class LobbyCreateMenu : SmartMenu
             lobbyPinnedCheckBox = new OpCheckBox(new Configurable<bool>(false), where);
             new UIelementWrapper(this.tabWrapper, lobbyPinnedCheckBox);
             where.y += 5;
-            where.x += 80;
         }
-
-        if (DateTime.Now.Month == 12 && DateTime.Now.Day < 30)
+        if (SpecialEvents.IsSpecialEvent)
         {
-            where.x -= 200;
             where.y -= 45;
-            mainPage.subObjects.Add(new ProperlyAlignedMenuLabel(this, mainPage, Translate("Anniversary Gags:"), where, new Vector2(400, 20f), false));
-            where.x += 120;
-            where.y -= 5;
-            lobbyAnniversaryGags = new OpCheckBox(new Configurable<bool>(false), where);
-            new UIelementWrapper(this.tabWrapper, lobbyAnniversaryGags);
-            where.y += 5;
+            mainPage.subObjects.Add(new ProperlyAlignedMenuLabel(this, mainPage, Translate("Event Gags:"), where, new Vector2(400, 20f), false));
             where.x += 80;
+            where.y -= 5;
+            lobbyEventGags = new OpCheckBox(new Configurable<bool>(false), where);
+            new UIelementWrapper(this.tabWrapper, lobbyEventGags);
+            where.x -= 80;
+            where.y += 5;
         }
 
+
+        where.y -= 85;
+        limitNumberLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Domain:"), where, new Vector2(200, 20f), false);
+        mainPage.subObjects.Add(limitNumberLabel);
+        where.x += 80;
+        where.y -= 5;
+        domainDropdown = new OpComboBox2(new Configurable<string>(
+                NetworkDomain.supportedDomains.Last().value), where, 160f - 35f, NetworkDomain.supportedDomains.Select(x => new ListItem(x.value, Utils.Translate(x.value))).ToList()) { colorEdge = MenuColorEffect.rgbWhite };
+        new UIelementWrapper(this.tabWrapper, domainDropdown);
+        where.x -= 80;
+
+
+        where.y -= 45;
+        var visibilityLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Visibility:"), where, new Vector2(200, 20f), false);
+        mainPage.subObjects.Add(visibilityLabel);
+        where.x += 80;
+        visibilityDropDown = new OpComboBox2(new Configurable<NetworkDomain.LobbyVisibility>(NetworkDomain.LobbyVisibility.Public), where, 160, OpResourceSelector.GetEnumNames(null, typeof(NetworkDomain.LobbyVisibility)).Select(li => { li.displayName = Translate(li.displayName); return li; }).ToList()) { colorEdge = MenuColorEffect.rgbWhite };
+        visibilityWrapper = new UIelementWrapper(this.tabWrapper, visibilityDropDown);
+
+        where.x += 200;
+        visibilityLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("(Steam domain only)"), where, new Vector2(200, 20f), false);
+        mainPage.subObjects.Add(visibilityLabel);
+        where.x -= 200;
+
+        where.y -= 45;
+        where.x -= 80;
+        var lobbyServerOverrideLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("Lobby server:"), where, new Vector2(200, 20f), false);
+        mainPage.subObjects.Add(lobbyServerOverrideLabel);
+        where.x += 80;
+        lobbyServerOverrideBox = new OpTypeBox(new Configurable<string>(""), where, 160f)
+        {
+            accept = OpTextBox.Accept.StringASCII,
+            allowSpace = true,
+            defaultValue = "",
+            maxLength = 100,
+            description = Utils.Translate("In Router network, specify the endpoint (pubkey@ip:port) for a custom lobby server instead of submitting the lobby to the global matchmaking server"),
+            password = RainMeadow.rainMeadowOptions.StreamerMode.Value == RainMeadowOptions.StreamMode.Me || RainMeadow.rainMeadowOptions.StreamerMode.Value == RainMeadowOptions.StreamMode.Everyone,
+        };
+        lobbyServerOverrideBox.PosX = modeDropDown.pos.x;
+        lobbyServerOverrideBox.label.text = Utils.Translate("[default: Meadow servers]");
+        lobbyServerOverrideWrapper = new UIelementWrapper(this.tabWrapper, lobbyServerOverrideBox);
+
+        where.x += 200;
+        lobbyServerOverrideLabel = new ProperlyAlignedMenuLabel(this, mainPage, Translate("(Router domain only)"), where, new Vector2(200, 20f), false);
+        mainPage.subObjects.Add(lobbyServerOverrideLabel);
+        where.x -= 200;
 
         // display version
+        where.x += 80;
         MenuLabel versionLabel = new MenuLabel(this, pages[0], $"{Utils.Translate("Rain Meadow Version:")} {RainMeadow.MeadowVersionStr}", new Vector2((1336f - manager.rainWorld.screenSize.x) / 2f + 20f, manager.rainWorld.screenSize.y - 768f), new Vector2(200f, 20f), false, null);
         versionLabel.size = new Vector2(versionLabel.label.textRect.width, versionLabel.size.y);
         mainPage.subObjects.Add(versionLabel);
@@ -156,10 +226,8 @@ public class LobbyCreateMenu : SmartMenu
         }
         else
         {
-            if (this.lobbyAnniversaryGags?.GetValueBool() ?? false)
-            {
-                OnlineManager.lobby.configurableBools.Add("MEADOW_ANNIVERSARY", true);
-            }
+            OnlineManager.lobby.eventGags = lobbyEventGags?.GetValueBool() ?? false;
+            OnlineManager.lobby.meadowTimeline = this.meadowTimeline;
         }
     }
 
@@ -172,18 +240,37 @@ public class LobbyCreateMenu : SmartMenu
     private void UpdateModeDescription()
     {
         modeDescriptionLabel.text = Custom.ReplaceLineDelimeters(Translate(OnlineGameMode.OnlineGameModeType.descriptions[new OnlineGameMode.OnlineGameModeType(modeDropDown.value)]));
+        if (modeDropDown.value == OnlineGameMode.OnlineGameModeType.Meadow.value)
+        {
+            meadowTimelineDropdown.greyedOut = false;
+        }
+        else
+        {
+            meadowTimelineDropdown.greyedOut = true;
+            meadowTimeline = "";
+        }
+
     }
+
+    private void UpdateMeadowTimeline()
+    {
+        meadowTimeline = SlugcatStats.SlugcatToTimeline(new SlugcatStats.Name(meadowTimelineDropdown.value)).value;
+        RainMeadow.Debug($"Selected Meadow Timeline: {meadowTimeline}");
+    }
+
     public void CreateElementBindings()
     {
         //Column; enforce element order, and fix/adjust left/right binds.
-        List<MenuObject> VerticalElements = new List<MenuObject>() { modeDropDown.wrapper, visibilityDropDown.wrapper, passwordInputBox.wrapper, lobbyLimitNumberTextBox.wrapper };
+        List<MenuObject> VerticalElements = [modeDropDown.wrapper, visibilityDropDown.wrapper, passwordInputBox.wrapper, lobbyLimitNumberTextBox.wrapper, meadowTimelineDropdown.wrapper];
+        if (lobbyPinnedCheckBox != null) { VerticalElements.Add(lobbyPinnedCheckBox.wrapper); }
+        if (lobbyEventGags != null) { VerticalElements.Add(lobbyEventGags.wrapper); }
         Extensions.TrySequentialMutualBind(this, VerticalElements, bottomTop: true, loopLastIndex: true, reverseList: true);
-        Extensions.TryMassBind(VerticalElements, backObject, left:true);
-        Extensions.TryMassBind(VerticalElements, createButton, right:true);
+        Extensions.TryMassBind(VerticalElements, backObject, left: true);
+        Extensions.TryMassBind(VerticalElements, createButton, right: true);
         //Bottom row; enforce element order and fix/adjust up/down binds.
-        List<MenuObject> BottomRowElements = new List<MenuObject>() { backObject, createButton };
-        Extensions.TryMassBind(BottomRowElements, lobbyLimitNumberTextBox.wrapper, top:true);
-        Extensions.TryMassBind(BottomRowElements, modeDropDown.wrapper, bottom:true);
+        List<MenuObject> BottomRowElements = [backObject, createButton];
+        Extensions.TryMassBind(BottomRowElements, VerticalElements.Last(), top: true);
+        Extensions.TryMassBind(BottomRowElements, VerticalElements.First(), bottom: true);
         Extensions.TryMutualBind(this, backObject, createButton, leftRight: true);
     }
 
@@ -204,11 +291,23 @@ public class LobbyCreateMenu : SmartMenu
 
     private void RequestLobbyCreate()
     {
-        var domain = (NetworkDomain.NetworkDomainType)ExtEnumBase.Parse(typeof(NetworkDomain.NetworkDomainType), domainDropdown.value, true); ;
+        var domain = (NetworkDomain.NetworkDomainType)ExtEnumBase.Parse(typeof(NetworkDomain.NetworkDomainType), domainDropdown.value, true);
+
         RainMeadow.DebugMe();
         Enum.TryParse<NetworkDomain.LobbyVisibility>(visibilityDropDown.value, out var value);
         string? password = passwordInputBox.value.IsNullOrWhiteSpace() ? null : passwordInputBox.value;
-        NetworkDomain.instances[domain].CreateLobby(value, modeDropDown.value, password, maxPlayerCount, this.lobbyPinnedCheckBox?.GetValueBool() ?? false);
+        try
+        {
+            if (domain == NetworkDomain.NetworkDomainType.Router)
+            {
+                RainMeadow.Debug("override value: " + lobbyServerOverrideBox.value);
+                NetworkDomain.Router.PreconfigureLobbyServerForCreation(lobbyServerOverrideBox.value);
+            }
+            NetworkDomain.instances[domain].CreateLobby(value, modeDropDown.value, password, maxPlayerCount, this.lobbyPinnedCheckBox?.GetValueBool() ?? false);
+        }
+        catch (Exception except) {
+            ShowErrorDialog(except.Message);
+        }
     }
 
     private void ShowLoadingDialog(string text)
