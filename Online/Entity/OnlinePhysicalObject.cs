@@ -331,7 +331,15 @@ namespace RainMeadow
                                 {
                                     RainMeadow.Debug($"early entity"); // room loading will place it
                                 }
-
+                                // We have some scenarios of invis creatures due to a skipped graphic attachment in the room update list
+                                if (apo.realizedObject is PhysicalObject rpo
+                                    && newRoom.absroom.realizedRoom is Room rroom
+                                    && rroom.updateList.Contains(rpo)
+                                    && RainMeadow.NeedsGraphicsAttach(rroom, rpo))
+                                {
+                                    RainMeadow.Debug($"reattaching graphics");
+                                    rroom.AddObject(rpo);
+                                }
                             }
                             else
                             {
